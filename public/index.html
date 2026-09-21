@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>💎 Luxe Jewelry — Ювелирный магазин</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <div class="logo">💎 Luxe Jewelry</div>
+      <nav>
+        <a href="#" data-cat="">Все</a>
+        <a href="#" data-cat="rings">Кольца</a>
+        <a href="#" data-cat="earrings">Серьги</a>
+        <a href="#" data-cat="necklaces">Колье</a>
+        <a href="#" data-cat="bracelets">Браслеты</a>
+      </nav>
+      <div class="cart">🛒 <span id="cartCount">0</span></div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <h1>Роскошь в каждой детали</h1>
+      <p>Украшения ручной работы из золота, платины и серебра</p>
+    </div>
+  </section>
+
+  <main class="container">
+    <div class="filters">
+      <input type="text" id="search" placeholder="🔍 Поиск украшений...">
+      <select id="sort">
+        <option value="">Сортировка</option>
+        <option value="price-asc">Цена ↑</option>
+        <option value="price-desc">Цена ↓</option>
+        <option value="rating">По рейтингу</option>
+      </select>
+    </div>
+
+    <div id="products" class="products"></div>
+  </main>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>© 2025 Luxe Jewelry • API для Postman: <code>/api</code></p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
