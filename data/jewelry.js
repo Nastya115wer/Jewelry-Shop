@@ -7,7 +7,7 @@ module.exports = [
     gemstone: "Бриллиант 0.5ct",
     price: 89900,
     stock: 12,
-    image: "https://basket-44.wbbasket.ru/vol12671/part1267170/1267170507/images/big/1.webp",
+    image: "https://i.pinimg.com/736x/8e/ae/61/8eae615b62574def94ade329cec76d4c.jpg",
     description: "Классическое обручальное кольцо из золота с бриллиантом",
     rating: 4.9
   },
