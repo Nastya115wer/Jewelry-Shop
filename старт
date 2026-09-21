@@ -1,0 +1,4 @@
+mkdir jewelry-shop && cd jewelry-shop
+# создайте все файлы выше
+npm install
+npm start
