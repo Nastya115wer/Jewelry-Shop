@@ -7,7 +7,7 @@ module.exports = [
     gemstone: "Бриллиант 0.5ct",
     price: 89900,
     stock: 12,
-    image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400",
+    image: "https://cokgold.ru/upload/resize_cache/iblock/f12/…nzgznooq0t1e2ufq929d/200_200_2/931251%D0%91_2.jpg",
     description: "Классическое обручальное кольцо из золота с бриллиантом",
     rating: 4.9
   },
