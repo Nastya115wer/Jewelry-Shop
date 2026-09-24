@@ -1,0 +1,6 @@
+- name: Deploy to production
+  env:
+    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  run: |
+    # ваш деплой-скрипт
+    ssh user@server "cd /app && export OPENAI_API_KEY=$OPENAI_API_KEY && pm2 restart all"
