@@ -1,0 +1,2 @@
+# Установка официального SDK OpenAI и dotenv для работы с переменными окружения
+npm install openai dotenv
