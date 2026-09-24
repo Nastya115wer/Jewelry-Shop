@@ -259,3 +259,48 @@ app.listen(PORT, () => {
   console.log(`📮 API:   http://localhost:${PORT}/api`);
   console.log(`📊 Stats: http://localhost:${PORT}/api/stats\n`);
 });
+
+const { askAI } = require('./services/aiService');
+
+// POST /api/ai/chat — чат с AI
+app.post('/api/ai/chat', async (req, res) => {
+  try {
+    const { message } = req.body;
+    
+    if (!message || message.length > 2000) {
+      return res.status(400).json({
+        success: false,
+        error: 'Сообщение обязательно и не должно превышать 2000 символов'
+      });
+    }
+    
+    const reply = await askAI(message);
+    
+    res.json({ success: true, reply });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// POST /api/ai/describe — автогенерация описания товара (для менеджера)
+app.post('/api/ai/describe', async (req, res) => {
+  try {
+    const { productName, material, gemstone } = req.body;
+    
+    const prompt = `Напиши привлекательное описание для ювелирного украшения.
+      Название: ${productName}
+      Материал: ${material}
+      Камень: ${gemstone || 'нет'}
+      
+      Стиль: премиальный, эмоциональный, 2-3 предложения.`;
+    
+    const description = await askAI(prompt, 'Ты — опытный копирайтер ювелирного магазина.');
+    
+    res.json({ success: true, description });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
