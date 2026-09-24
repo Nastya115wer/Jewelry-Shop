@@ -117,3 +117,94 @@ document.getElementById('sort').onchange = (e) => {
 // Инициализация
 loadProducts();
 updateCartCount();
+
+// ==========================================
+// 🤖 AI ЧАТ-ВИДЖЕТ
+// ==========================================
+
+const aiToggle = document.getElementById('aiToggle');
+const aiWidget = document.getElementById('aiWidget');
+const aiClose = document.getElementById('aiClose');
+const aiForm = document.getElementById('aiForm');
+const aiInput = document.getElementById('aiInput');
+const aiMessages = document.getElementById('aiMessages');
+const aiSend = document.getElementById('aiSend');
+
+// История диалога для контекста
+let chatHistory = [];
+
+// Открытие/закрытие окна
+aiToggle.onclick = () => aiWidget.classList.toggle('active');
+aiClose.onclick = () => aiWidget.classList.remove('active');
+
+// Отправка сообщения
+aiForm.onsubmit = async (e) => {
+  e.preventDefault();
+  
+  const message = aiInput.value.trim();
+  if (!message) return;
+
+  // 1. Показываем сообщение пользователя
+  addMessage(message, 'user');
+  aiInput.value = '';
+  aiInput.disabled = true;
+  aiSend.disabled = true;
+
+  // 2. Показываем "печатает..."
+  const typing = addTypingIndicator();
+
+  try {
+    // 3. Отправляем запрос на наш backend
+    const response = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        message,
+        history: chatHistory.slice(-6) // последние 3 пары вопрос-ответ
+      })
+    });
+
+    const data = await response.json();
+    typing.remove();
+
+    if (data.success) {
+      addMessage(data.reply, 'bot');
+      
+      // Сохраняем в историю для контекста
+      chatHistory.push(
+        { role: 'user', content: message },
+        { role: 'assistant', content: data.reply }
+      );
+    } else {
+      addMessage('Извините, произошла ошибка. Попробуйте позже.', 'bot');
+    }
+  } catch (error) {
+    typing.remove();
+    addMessage('Нет соединения с сервером. Проверьте интернет.', 'bot');
+    console.error('AI Error:', error);
+  } finally {
+    aiInput.disabled = false;
+    aiSend.disabled = false;
+    aiInput.focus();
+  }
+};
+
+// Добавление сообщения в чат
+function addMessage(text, sender) {
+  const div = document.createElement('div');
+  div.className = `ai-message ai-${sender}`;
+  div.textContent = text;
+  aiMessages.appendChild(div);
+  aiMessages.scrollTop = aiMessages.scrollHeight;
+  return div;
+}
+
+// Индикатор "печатает..."
+function addTypingIndicator() {
+  const div = document.createElement('div');
+  div.className = 'ai-typing';
+  div.innerHTML = '<span>●</span><span>●</span><span>●</span>';
+  aiMessages.appendChild(div);
+  aiMessages.scrollTop = aiMessages.scrollHeight;
+  return div;
+}
