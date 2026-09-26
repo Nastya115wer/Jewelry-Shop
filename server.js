@@ -252,14 +252,6 @@ app.use('/api', (req, res) => {
   res.status(404).json({ success: false, error: 'Endpoint не найден' });
 });
 
-// Запуск
-app.listen(PORT, () => {
-  console.log(`\n💎 Jewelry Shop запущен!`);
-  console.log(`🌐 Сайт:  http://localhost:${PORT}`);
-  console.log(`📮 API:   http://localhost:${PORT}/api`);
-  console.log(`📊 Stats: http://localhost:${PORT}/api/stats\n`);
-});
-
 const { askAI } = require('./services/aiService');
 
 // POST /api/ai/chat — чат с AI
@@ -303,4 +295,12 @@ app.post('/api/ai/describe', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
+});
+
+// Запуск
+app.listen(PORT, () => {
+  console.log(`\n💎 Jewelry Shop запущен!`);
+  console.log(`🌐 Сайт:  http://localhost:${PORT}`);
+  console.log(`📮 API:   http://localhost:${PORT}/api`);
+  console.log(`📊 Stats: http://localhost:${PORT}/api/stats\n`);
 });
