@@ -1,4 +1,4 @@
-npm install openai dotenv
+
 // services/aiService.js
 require('dotenv').config();
 const OpenAI = require('openai');
