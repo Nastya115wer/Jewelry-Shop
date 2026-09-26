@@ -6,33 +6,6 @@
   <title>💎 Luxe Jewelry — Ювелирный магазин</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<!-- Кнопка открытия чата -->
-<button id="aiToggle" class="ai-toggle">💬</button>
-
-<!-- Окно чата -->
-<div id="aiWidget" class="ai-widget">
-  <div class="ai-header">
-    <span>💎 AI-консультант</span>
-    <button id="aiClose" class="ai-close">✕</button>
-  </div>
-  
-  <div id="aiMessages" class="ai-messages">
-    <div class="ai-message ai-bot">
-      Здравствуйте! Помогу подобрать украшение. Что вы ищете?
-    </div>
-  </div>
-  
-  <form id="aiForm" class="ai-form">
-    <input 
-      type="text" 
-      id="aiInput" 
-      placeholder="Например: кольцо с бриллиантом до 100000..." 
-      autocomplete="off"
-      maxlength="2000"
-    >
-    <button type="submit" id="aiSend">➤</button>
-  </form>
-</div>
   <body>
   <header>
     <div class="container header-inner">
@@ -75,6 +48,33 @@
       <div id="modalBody"></div>
     </div>
   </div>
+    <!-- Кнопка открытия чата -->
+<button id="aiToggle" class="ai-toggle">💬</button>
+
+<!-- Окно чата -->
+<div id="aiWidget" class="ai-widget">
+  <div class="ai-header">
+    <span>💎 AI-консультант</span>
+    <button id="aiClose" class="ai-close">✕</button>
+  </div>
+  
+  <div id="aiMessages" class="ai-messages">
+    <div class="ai-message ai-bot">
+      Здравствуйте! Помогу подобрать украшение. Что вы ищете?
+    </div>
+  </div>
+  
+  <form id="aiForm" class="ai-form">
+    <input 
+      type="text" 
+      id="aiInput" 
+      placeholder="Например: кольцо с бриллиантом до 100000..." 
+      autocomplete="off"
+      maxlength="2000"
+    >
+    <button type="submit" id="aiSend">➤</button>
+  </form>
+</div>
 
   <footer>
     <div class="container">
