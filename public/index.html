@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>💎 Luxe Jewelry — Ювелирный магазин</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
 </head>
-  <body>
+<body>
+
   <header>
     <div class="container header-inner">
       <div class="logo">💎 Luxe Jewelry</div>
@@ -44,43 +46,43 @@
 
   <div id="modal" class="modal">
     <div class="modal-content">
-      <span class="close">&times;</span>
+      <span class="close" id="modalClose">&times;</span>
       <div id="modalBody"></div>
     </div>
   </div>
-    <!-- Кнопка открытия чата -->
-<button id="aiToggle" class="ai-toggle">💬</button>
-
-<!-- Окно чата -->
-<div id="aiWidget" class="ai-widget">
-  <div class="ai-header">
-    <span>💎 AI-консультант</span>
-    <button id="aiClose" class="ai-close">✕</button>
-  </div>
-  
-  <div id="aiMessages" class="ai-messages">
-    <div class="ai-message ai-bot">
-      Здравствуйте! Помогу подобрать украшение. Что вы ищете?
-    </div>
-  </div>
-  
-  <form id="aiForm" class="ai-form">
-    <input 
-      type="text" 
-      id="aiInput" 
-      placeholder="Например: кольцо с бриллиантом до 100000..." 
-      autocomplete="off"
-      maxlength="2000"
-    >
-    <button type="submit" id="aiSend">➤</button>
-  </form>
-</div>
 
   <footer>
     <div class="container">
       <p>© 2025 Luxe Jewelry • API для Postman: <code>/api</code></p>
     </div>
   </footer>
+
+  <!-- AI-виджет: внутри body, до script -->
+  <button id="aiToggle" class="ai-toggle" type="button" aria-label="Открыть AI-чат">💬</button>
+
+  <div id="aiWidget" class="ai-widget" role="dialog" aria-label="AI-консультант">
+    <div class="ai-header">
+      <span>💎 AI-консультант</span>
+      <button id="aiClose" class="ai-close" type="button" aria-label="Закрыть">✕</button>
+    </div>
+
+    <div id="aiMessages" class="ai-messages">
+      <div class="ai-message ai-bot">
+        Здравствуйте! Помогу подобрать украшение. Что вы ищете?
+      </div>
+    </div>
+
+    <form id="aiForm" class="ai-form">
+      <input
+        type="text"
+        id="aiInput"
+        placeholder="Например: кольцо с бриллиантом до 100000..."
+        autocomplete="off"
+        maxlength="2000"
+      >
+      <button type="submit" id="aiSend" aria-label="Отправить">➤</button>
+    </form>
+  </div>
 
   <script src="script.js"></script>
 </body>
