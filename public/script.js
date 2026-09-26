@@ -1,21 +1,91 @@
-const API = '/api';
-let allProducts = [];
-let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+'use strict';
 
-// Загрузка товаров
-async function loadProducts(category = '') {
+const API = '/api';
+
+// ---------- Состояние ----------
+let allProducts = [];       // полный список (для поиска/сортировки)
+let currentCategory = '';   // текущая категория
+let cart = loadCart();
+
+function loadCart() {
   try {
-    const url = category ? `${API}/products?category=${category}` : `${API}/products`;
-    const res = await fetch(url);
-    const json = await res.json();
-    allProducts = json.data;
-    renderProducts(allProducts);
-  } catch (e) {
-    console.error('Ошибка загрузки:', e);
+    const raw = JSON.parse(localStorage.getItem('cart'));
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
   }
 }
 
-// Отрисовка
+function saveCart() {
+  try {
+    localStorage.setItem('cart', JSON.stringify(cart));
+  } catch (e) {
+    console.warn('Не удалось сохранить корзину:', e);
+  }
+}
+
+// ---------- Загрузка товаров ----------
+async function loadProducts(category = '') {
+  currentCategory = category;
+  const container = document.getElementById('products');
+  container.innerHTML = '<div class="empty">⏳ Загрузка...</div>';
+
+  try {
+    const url = category
+      ? `${API}/products?category=${encodeURIComponent(category)}`
+      : `${API}/products`;
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const json = await res.json();
+    allProducts = Array.isArray(json.data) ? json.data : [];
+    applyFiltersAndRender();
+  } catch (e) {
+    console.error('Ошибка загрузки:', e);
+    container.innerHTML = '<div class="empty">😔 Не удалось загрузить товары</div>';
+  }
+}
+
+// ---------- Фильтр + сортировка ----------
+function applyFiltersAndRender() {
+  const q = (document.getElementById('search').value || '').trim().toLowerCase();
+  const sort = document.getElementById('sort').value;
+
+  let list = [...allProducts];
+
+  if (q) {
+    list = list.filter(p =>
+      String(p.name || '').toLowerCase().includes(q) ||
+      String(p.description || '').toLowerCase().includes(q) ||
+      String(p.gemstone || '').toLowerCase().includes(q)
+    );
+  }
+
+  switch (sort) {
+    case 'price-asc':  list.sort((a, b) => a.price - b.price); break;
+    case 'price-desc': list.sort((a, b) => b.price - a.price); break;
+    case 'rating':     list.sort((a, b) => (b.rating || 0) - (a.rating || 0)); break;
+  }
+
+  renderProducts(list);
+}
+
+// ---------- Отрисовка ----------
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatPrice(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toLocaleString('ru-RU') : '—';
+}
+
 function renderProducts(products) {
   const container = document.getElementById('products');
 
@@ -25,186 +95,218 @@ function renderProducts(products) {
   }
 
   container.innerHTML = products.map(p => `
-    <div class="product-card" onclick="openModal(${p.id})">
-      <img src="${p.image}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/400x250?text=Jewelry'">
+    <div class="product-card" data-id="${p.id}">
+      <img
+        src="${escapeHtml(p.image)}"
+        alt="${escapeHtml(p.name)}"
+        onerror="this.onerror=null;this.src='https://via.placeholder.com/400x250?text=Jewelry'"
+      >
       <div class="product-info">
-        <h3>${p.name}</h3>
-        <div class="material">${p.material} • ${p.gemstone}</div>
-        <div class="price">${p.price.toLocaleString('ru-RU')} ₽</div>
-        <div class="rating">⭐ ${p.rating} • В наличии: ${p.stock}</div>
+        <h3>${escapeHtml(p.name)}</h3>
+        <div class="material">${escapeHtml(p.material)} • ${escapeHtml(p.gemstone)}</div>
+        <div class="price">${formatPrice(p.price)} ₽</div>
+        <div class="rating">⭐ ${escapeHtml(p.rating ?? 0)} • В наличии: ${escapeHtml(p.stock ?? 0)}</div>
       </div>
     </div>
   `).join('');
 }
 
-// Модальное окно
+// ---------- Модальное окно ----------
+let modalProduct = null;
+
 async function openModal(id) {
-  const res = await fetch(`${API}/products/${id}`);
-  const { data: p } = await res.json();
+  try {
+    const res = await fetch(`${API}/products/${id}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { data: p } = await res.json();
+    modalProduct = p;
 
-  document.getElementById('modalBody').innerHTML = `
-    <div class="modal-product">
-      <img src="${p.image}" alt="${p.name}">
-      <h2>${p.name}</h2>
-      <p>${p.description}</p>
-      <p><strong>Материал:</strong> ${p.material}</p>
-      <p><strong>Камень:</strong> ${p.gemstone}</p>
-      <p><strong>Рейтинг:</strong> ⭐ ${p.rating}</p>
-      <div class="modal-price">${p.price.toLocaleString('ru-RU')} ₽</div>
-      <button onclick="addToCart(${p.id}, '${p.name.replace(/'/g, "\\'")}', ${p.price})">
-        🛒 Добавить в корзину
-      </button>
-    </div>
-  `;
+    document.getElementById('modalBody').innerHTML = `
+      <div class="modal-product">
+        <img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}"
+             onerror="this.onerror=null;this.src='https://via.placeholder.com/400x250?text=Jewelry'">
+        <h2>${escapeHtml(p.name)}</h2>
+        <p>${escapeHtml(p.description)}</p>
+        <p><strong>Материал:</strong> ${escapeHtml(p.material)}</p>
+        <p><strong>Камень:</strong> ${escapeHtml(p.gemstone)}</p>
+        <p><strong>Рейтинг:</strong> ⭐ ${escapeHtml(p.rating ?? 0)}</p>
+        <div class="modal-price">${formatPrice(p.price)} ₽</div>
+        <button id="addToCartBtn" type="button">🛒 Добавить в корзину</button>
+      </div>
+    `;
 
-  document.getElementById('modal').classList.add('active');
+    document.getElementById('addToCartBtn').onclick = () => {
+      addToCart(p.id, p.name, p.price);
+    };
+
+    document.getElementById('modal').classList.add('active');
+  } catch (e) {
+    console.error('Ошибка открытия товара:', e);
+  }
 }
 
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+}
+
+// ---------- Корзина ----------
 function addToCart(id, name, price) {
   cart.push({ id, name, price });
-  localStorage.setItem('cart', JSON.stringify(cart));
+  saveCart();
   updateCartCount();
-  alert(`✅ "${name}" добавлен в корзину!`);
+  showToast(`✅ "${name}" добавлен в корзину`);
 }
 
 function updateCartCount() {
-  document.getElementById('cartCount').textContent = cart.length;
+  const el = document.getElementById('cartCount');
+  if (el) el.textContent = cart.length;
 }
 
-// Закрытие модального окна
-document.querySelector('.close').onclick = () => {
-  document.getElementById('modal').classList.remove('active');
-};
-
-document.getElementById('modal').onclick = (e) => {
-  if (e.target.id === 'modal') {
-    e.target.classList.remove('active');
+// ---------- Toast ----------
+function showToast(text) {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
   }
-};
+  toast.textContent = text;
+  toast.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => toast.classList.remove('show'), 2500);
+}
 
-// Фильтр по категориям
-document.querySelectorAll('nav a').forEach(link => {
-  link.onclick = (e) => {
+// ---------- AI-чат ----------
+const chatHistory = [];
+
+function initAI() {
+  const aiToggle = document.getElementById('aiToggle');
+  const aiWidget = document.getElementById('aiWidget');
+  const aiClose  = document.getElementById('aiClose');
+  const aiForm   = document.getElementById('aiForm');
+  const aiInput  = document.getElementById('aiInput');
+  const aiSend   = document.getElementById('aiSend');
+  const aiMessages = document.getElementById('aiMessages');
+
+  if (!aiToggle || !aiWidget || !aiForm) {
+    console.warn('AI-виджет не найден в DOM');
+    return;
+  }
+
+  aiToggle.addEventListener('click', () => {
+    aiWidget.classList.toggle('active');
+    if (aiWidget.classList.contains('active')) aiInput?.focus();
+  });
+
+  aiClose?.addEventListener('click', () => aiWidget.classList.remove('active'));
+
+  function addMessage(text, sender) {
+    const div = document.createElement('div');
+    div.className = `ai-message ai-${sender}`;
+    div.textContent = text;
+    aiMessages.appendChild(div);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+    return div;
+  }
+
+  function addTypingIndicator() {
+    const div = document.createElement('div');
+    div.className = 'ai-typing';
+    div.innerHTML = '<span>●</span><span>●</span><span>●</span>';
+    aiMessages.appendChild(div);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+    return div;
+  }
+
+  aiForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    document.querySelectorAll('nav a').forEach(a => a.style.color = '');
-    link.style.color = '#d4af37';
-    loadProducts(link.dataset.cat);
-  };
-});
 
-// Поиск
-document.getElementById('search').oninput = (e) => {
-  const q = e.target.value.toLowerCase();
-  const filtered = allProducts.filter(p =>
-    p.name.toLowerCase().includes(q) ||
-    p.description.toLowerCase().includes(q) ||
-    p.gemstone.toLowerCase().includes(q)
-  );
-  renderProducts(filtered);
-};
+    const message = aiInput.value.trim();
+    if (!message) return;
 
-// Сортировка
-document.getElementById('sort').onchange = (e) => {
-  let sorted = [...allProducts];
-  switch (e.target.value) {
-    case 'price-asc': sorted.sort((a, b) => a.price - b.price); break;
-    case 'price-desc': sorted.sort((a, b) => b.price - a.price); break;
-    case 'rating': sorted.sort((a, b) => b.rating - a.rating); break;
-  }
-  renderProducts(sorted);
-};
+    addMessage(message, 'user');
+    aiInput.value = '';
+    aiInput.disabled = true;
+    aiSend.disabled = true;
 
-// Инициализация
-loadProducts();
-updateCartCount();
+    const typing = addTypingIndicator();
 
-// ==========================================
-// 🤖 AI ЧАТ-ВИДЖЕТ
-// ==========================================
+    try {
+      const response = await fetch(`${API}/ai/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message,
+          history: chatHistory.slice(-6)
+        })
+      });
 
-const aiToggle = document.getElementById('aiToggle');
-const aiWidget = document.getElementById('aiWidget');
-const aiClose = document.getElementById('aiClose');
-const aiForm = document.getElementById('aiForm');
-const aiInput = document.getElementById('aiInput');
-const aiMessages = document.getElementById('aiMessages');
-const aiSend = document.getElementById('aiSend');
+      const data = await response.json().catch(() => ({}));
+      typing.remove();
 
-// История диалога для контекста
-let chatHistory = [];
-
-// Открытие/закрытие окна
-aiToggle.onclick = () => aiWidget.classList.toggle('active');
-aiClose.onclick = () => aiWidget.classList.remove('active');
-
-// Отправка сообщения
-aiForm.onsubmit = async (e) => {
-  e.preventDefault();
-  
-  const message = aiInput.value.trim();
-  if (!message) return;
-
-  // 1. Показываем сообщение пользователя
-  addMessage(message, 'user');
-  aiInput.value = '';
-  aiInput.disabled = true;
-  aiSend.disabled = true;
-
-  // 2. Показываем "печатает..."
-  const typing = addTypingIndicator();
-
-  try {
-    // 3. Отправляем запрос на наш backend
-    const response = await fetch('/api/ai/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        message,
-        history: chatHistory.slice(-6) // последние 3 пары вопрос-ответ
-      })
-    });
-
-    const data = await response.json();
-    typing.remove();
-
-    if (data.success) {
-      addMessage(data.reply, 'bot');
-      
-      // Сохраняем в историю для контекста
-      chatHistory.push(
-        { role: 'user', content: message },
-        { role: 'assistant', content: data.reply }
-      );
-    } else {
-      addMessage('Извините, произошла ошибка. Попробуйте позже.', 'bot');
+      if (response.ok && data.success) {
+        addMessage(data.reply, 'bot');
+        chatHistory.push(
+          { role: 'user', content: message },
+          { role: 'assistant', content: data.reply }
+        );
+      } else {
+        addMessage(data.error || 'Извините, произошла ошибка. Попробуйте позже.', 'bot');
+      }
+    } catch (error) {
+      typing.remove();
+      addMessage('Нет соединения с сервером. Проверьте интернет.', 'bot');
+      console.error('AI Error:', error);
+    } finally {
+      aiInput.disabled = false;
+      aiSend.disabled = false;
+      aiInput.focus();
     }
-  } catch (error) {
-    typing.remove();
-    addMessage('Нет соединения с сервером. Проверьте интернет.', 'bot');
-    console.error('AI Error:', error);
-  } finally {
-    aiInput.disabled = false;
-    aiSend.disabled = false;
-    aiInput.focus();
-  }
-};
-
-// Добавление сообщения в чат
-function addMessage(text, sender) {
-  const div = document.createElement('div');
-  div.className = `ai-message ai-${sender}`;
-  div.textContent = text;
-  aiMessages.appendChild(div);
-  aiMessages.scrollTop = aiMessages.scrollHeight;
-  return div;
+  });
 }
 
-// Индикатор "печатает..."
-function addTypingIndicator() {
-  const div = document.createElement('div');
-  div.className = 'ai-typing';
-  div.innerHTML = '<span>●</span><span>●</span><span>●</span>';
-  aiMessages.appendChild(div);
-  aiMessages.scrollTop = aiMessages.scrollHeight;
-  return div;
-}
+// ---------- Инициализация ----------
+document.addEventListener('DOMContentLoaded', () => {
+  // Категории
+  document.querySelectorAll('nav a[data-cat]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.querySelectorAll('nav a[data-cat]').forEach(a => a.classList.remove('active-cat'));
+      link.classList.add('active-cat');
+      loadProducts(link.dataset.cat || '');
+    });
+  });
+
+  // Поиск (с debounce)
+  let searchTimer;
+  document.getElementById('search').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(applyFiltersAndRender, 200);
+  });
+
+  // Сортировка
+  document.getElementById('sort').addEventListener('change', applyFiltersAndRender);
+
+  // Модалка
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modal').addEventListener('click', (e) => {
+    if (e.target.id === 'modal') closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // Делегирование кликов по карточкам
+  document.getElementById('products').addEventListener('click', (e) => {
+    const card = e.target.closest('.product-card');
+    if (card) openModal(Number(card.dataset.id));
+  });
+
+  // AI
+  initAI();
+
+  // Старт
+  updateCartCount();
+  loadProducts();
+});
